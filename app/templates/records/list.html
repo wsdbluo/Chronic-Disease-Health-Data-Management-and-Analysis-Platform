@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}我的健康记录{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>我的健康记录</h2>
+    <a href="{{ url_for('records.add_record') }}" class="btn btn-primary">+ 新增记录</a>
+</div>
+
+{% if records %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-light">
+            <tr>
+                <th>日期</th>
+                <th>收缩压</th>
+                <th>舒张压</th>
+                <th>血糖</th>
+                <th>心率</th>
+                <th>体重</th>
+                <th>备注</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in records %}
+            <tr>
+                <td>{{ r.record_date }}</td>
+                <td>{{ r.systolic_bp or "-" }}</td>
+                <td>{{ r.diastolic_bp or "-" }}</td>
+                <td>{{ r.blood_glucose or "-" }}</td>
+                <td>{{ r.heart_rate or "-" }}</td>
+                <td>{{ r.weight or "-" }}</td>
+                <td>{{ r.note or "-" }}</td>
+                <td>
+                    <a href="{{ url_for('records.edit_record', record_id=r.id) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+                    <form method="post" action="{{ url_for('records.delete_record', record_id=r.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除这条记录吗?')">删除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-secondary">还没有记录,点右上角「新增记录」添加第一条吧。</div>
+{% endif %}
+{% endblock %}

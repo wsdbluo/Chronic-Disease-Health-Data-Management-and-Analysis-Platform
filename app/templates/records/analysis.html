@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}数据分析{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">健康数据分析</h2>
+
+<h5 class="mt-4">统计摘要</h5>
+<div class="table-responsive">
+    <table class="table table-bordered bg-white w-auto">
+        <thead class="table-light">
+            <tr>
+                <th>记录条数</th>
+                <th>平均收缩压</th>
+                <th>平均舒张压</th>
+                <th>平均血糖</th>
+                <th>收缩压最高</th>
+                <th>收缩压最低</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stats.count }}</td>
+                <td>{{ stats.avg_systolic or "-" }}</td>
+                <td>{{ stats.avg_diastolic or "-" }}</td>
+                <td>{{ stats.avg_glucose or "-" }}</td>
+                <td>{{ stats.max_systolic or "-" }}</td>
+                <td>{{ stats.min_systolic or "-" }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h5 class="mt-4">异常预警</h5>
+{% if alerts %}
+<div class="table-responsive">
+    <table class="table table-bordered bg-white w-auto">
+        <thead class="table-light">
+            <tr>
+                <th>日期</th>
+                <th>异常指标</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in alerts %}
+            <tr>
+                <td>{{ a.record.record_date }}</td>
+                <td class="text-danger">{{ a.issues | join("、") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-success">暂无异常,各项指标正常 👍</div>
+{% endif %}
+
+<h5 class="mt-4">血压趋势</h5>
+<div class="card">
+    <div class="card-body">
+        <div id="bpChart" style="width:100%;height:380px;"></div>
+    </div>
+</div>
+
+<h5 class="mt-4">血糖趋势</h5>
+<div class="card">
+    <div class="card-body">
+        <div id="glucoseChart" style="width:100%;height:380px;"></div>
+    </div>
+</div>
+
+<p class="mt-4"><a href="{{ url_for('records.list_records') }}">返回记录列表</a></p>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script>
+    const dates = {{ dates | tojson }};
+    const systolic = {{ systolic | tojson }};
+    const diastolic = {{ diastolic | tojson }};
+    const glucose = {{ glucose | tojson }};
+
+    const bpChart = echarts.init(document.getElementById('bpChart'));
+    bpChart.setOption({
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['收缩压', '舒张压'] },
+        xAxis: { type: 'category', data: dates },
+        yAxis: { type: 'value', name: 'mmHg' },
+        series: [
+            { name: '收缩压', type: 'line', data: systolic, smooth: true },
+            { name: '舒张压', type: 'line', data: diastolic, smooth: true }
+        ]
+    });
+
+    const glucoseChart = echarts.init(document.getElementById('glucoseChart'));
+    glucoseChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dates },
+        yAxis: { type: 'value', name: 'mmol/L' },
+        series: [
+            { name: '血糖', type: 'line', data: glucose, smooth: true }
+        ]
+    });
+</script>
+{% endblock %}

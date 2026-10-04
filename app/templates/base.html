@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}慢性病健康数据管理平台{% endblock %}</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+{% if current_user.is_authenticated %}
+<nav class="navbar navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.index') }}">慢性病健康管理平台</a>
+        <div class="navbar-nav flex-row gap-3">
+            <a class="nav-link" href="{{ url_for('records.list_records') }}">我的记录</a>
+            <a class="nav-link" href="{{ url_for('records.analysis') }}">数据分析</a>
+            <a class="nav-link" href="{{ url_for('auth.logout') }}">退出({{ current_user.username }})</a>
+        </div>
+    </div>
+</nav>
+{% endif %}
+
+<div class="container mt-4 mb-5">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="alert alert-info">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

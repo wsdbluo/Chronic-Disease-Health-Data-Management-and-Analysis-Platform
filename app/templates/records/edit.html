@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}编辑健康记录{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">编辑健康记录</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label">记录日期</label>
+                <input type="date" name="record_date" class="form-control" value="{{ record.record_date }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">收缩压(高压)</label>
+                <input type="number" name="systolic_bp" min="0" max="300" class="form-control" value="{{ record.systolic_bp or '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">舒张压(低压)</label>
+                <input type="number" name="diastolic_bp" min="0" max="200" class="form-control" value="{{ record.diastolic_bp or '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">血糖</label>
+                <input type="number" step="0.1" name="blood_glucose" min="0" max="50" class="form-control" value="{{ record.blood_glucose or '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">心率</label>
+                <input type="number" name="heart_rate" min="0" max="300" class="form-control" value="{{ record.heart_rate or '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">体重(kg)</label>
+                <input type="number" step="0.1" name="weight" min="0" max="500" class="form-control" value="{{ record.weight or '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">备注</label>
+                <input type="text" name="note" class="form-control" value="{{ record.note or '' }}">
+            </div>
+            <button type="submit" class="btn btn-primary">保存修改</button>
+            <a href="{{ url_for('records.list_records') }}" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

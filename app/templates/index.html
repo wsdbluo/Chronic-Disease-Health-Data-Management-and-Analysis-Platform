@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h1 class="card-title">慢性病健康数据管理平台</h1>
+        <p class="card-text text-muted">欢迎回来,{{ current_user.username }}!</p>
+        <a href="{{ url_for('records.list_records') }}" class="btn btn-primary">我的健康记录</a>
+        <a href="{{ url_for('records.analysis') }}" class="btn btn-success">数据分析</a>
+    </div>
+</div>
+{% endblock %}
