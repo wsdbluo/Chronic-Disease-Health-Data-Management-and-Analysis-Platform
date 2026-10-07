@@ -19,6 +19,7 @@
                 <th>血糖</th>
                 <th>心率</th>
                 <th>体重</th>
+                <th>身高</th>
                 <th>备注</th>
                 <th>操作</th>
             </tr>
@@ -32,6 +33,7 @@
                 <td>{{ r.blood_glucose or "-" }}</td>
                 <td>{{ r.heart_rate or "-" }}</td>
                 <td>{{ r.weight or "-" }}</td>
+                <td>{{ r.height or "-" }}</td>
                 <td>{{ r.note or "-" }}</td>
                 <td>
                     <a href="{{ url_for('records.edit_record', record_id=r.id) }}" class="btn btn-sm btn-outline-primary">编辑</a>

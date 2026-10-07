@@ -42,6 +42,7 @@ class HealthRecord(db.Model):
     blood_glucose = db.Column(db.Float)   # 血糖
     heart_rate = db.Column(db.Integer)    # 心率
     weight = db.Column(db.Float)          # 体重(kg)
+    height = db.Column(db.Float)          # 身高(cm)
     note = db.Column(db.String(255))      # 备注
     created_at = db.Column(db.DateTime, default=datetime.now)
 

@@ -33,6 +33,11 @@
                 <input type="number" step="0.1" name="weight" min="0" max="500" class="form-control" value="{{ record.weight or '' }}">
             </div>
             <div class="mb-3">
+                <label class="form-label">身高(cm)</label>
+                <input type="number" step="0.1" name="height" min="50" max="300"
+                       class="form-control" value="{{ record.height or '' }}">
+            </div>
+            <div class="mb-3">
                 <label class="form-label">备注</label>
                 <input type="text" name="note" class="form-control" value="{{ record.note or '' }}">
             </div>

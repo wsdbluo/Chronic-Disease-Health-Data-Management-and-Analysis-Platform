@@ -16,6 +16,8 @@
                 <th>平均血糖</th>
                 <th>收缩压最高</th>
                 <th>收缩压最低</th>
+                <th>平均 BMI</th>
+                <th>最新 BMI</th>
             </tr>
         </thead>
         <tbody>
@@ -26,6 +28,13 @@
                 <td>{{ stats.avg_glucose or "-" }}</td>
                 <td>{{ stats.max_systolic or "-" }}</td>
                 <td>{{ stats.min_systolic or "-" }}</td>
+                <td>{{ stats.avg_bmi or "-" }}</td>
+                <td>
+                    {{ stats.last_bmi or "-" }}
+                    {% if stats.last_bmi_level %}
+                    <span class="badge bg-info text-dark">{{ stats.last_bmi_level }}</span>
+                    {% endif %}
+                </td>
             </tr>
         </tbody>
     </table>
@@ -69,6 +78,12 @@
     </div>
 </div>
 
+<h5 class="mt-4">BMI 趋势</h5>
+<div class="card">
+    <div class="card-body">
+        <div id="bmiChart" style="width:100%;height:380px;"></div>
+    </div>
+</div>
 <p class="mt-4"><a href="{{ url_for('records.list_records') }}">返回记录列表</a></p>
 
 <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
@@ -77,6 +92,7 @@
     const systolic = {{ systolic | tojson }};
     const diastolic = {{ diastolic | tojson }};
     const glucose = {{ glucose | tojson }};
+    const bmi = {{ bmi | tojson }};
 
     const bpChart = echarts.init(document.getElementById('bpChart'));
     bpChart.setOption({
@@ -97,6 +113,31 @@
         yAxis: { type: 'value', name: 'mmol/L' },
         series: [
             { name: '血糖', type: 'line', data: glucose, smooth: true }
+        ]
+    });
+
+    const bmiChart = echarts.init(document.getElementById('bmiChart'));
+    bmiChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dates },
+        yAxis: { type: 'value', name: 'BMI', min: 15, max: 35 },
+        series: [
+            {
+                name: 'BMI',
+                type: 'line',
+                data: bmi,
+                smooth: true,
+                connectNulls: true,
+                markLine: {
+                    silent: true,
+                    symbol: 'none',
+                    data: [
+                        { yAxis: 18.5, label: { formatter: '偏瘦 18.5' } },
+                        { yAxis: 24,   label: { formatter: '超重 24' } },
+                        { yAxis: 28,   label: { formatter: '肥胖 28' } }
+                    ]
+                }
+            }
         ]
     });
 </script>

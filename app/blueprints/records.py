@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -33,15 +33,18 @@ def parse_record_form(form):
         glucose = to_float(form.get("blood_glucose"))
         heart = to_int(form.get("heart_rate"))
         weight = to_float(form.get("weight"))
+        height = to_float(form.get("height"))
     except ValueError:
         return None, "数值格式不正确,请检查"
 
+    #范围校验
     ranges = [
         (systolic, "收缩压", 0, 300),
         (diastolic, "舒张压", 0, 200),
         (glucose, "血糖", 0, 50),
         (heart, "心率", 0, 300),
         (weight, "体重", 0, 500),
+        (height, "身高", 50, 300),
     ]
     for value, name, low, high in ranges:
         if value is not None and not (low < value < high):
@@ -54,14 +57,72 @@ def parse_record_form(form):
         "blood_glucose": glucose,
         "heart_rate": heart,
         "weight": weight,
+        "height": height,
         "note": form.get("note"),
     }
     return values, None
+
+
+# 新增记录时,这些指标会自动带出「上次填过的值」
+PREFILL_FIELDS = [
+    "systolic_bp",
+    "diastolic_bp",
+    "blood_glucose",
+    "heart_rate",
+    "weight",
+    "height",
+]
+
+
+def last_values(user_id):
+    """取该用户每个指标「最近一次填过的值」,用于新增记录时预填"""
+    prev = {name: None for name in PREFILL_FIELDS}
+    missing = set(PREFILL_FIELDS)
+
+    records = (
+        HealthRecord.query
+        .filter_by(user_id=user_id)
+        .order_by(HealthRecord.record_date.desc(), HealthRecord.id.desc())
+        .all()
+    )
+
+    for r in records:
+        for name in list(missing):
+            value = getattr(r, name)
+            if value is not None:
+                prev[name] = value
+                missing.discard(name)
+        if not missing:
+            break
+
+    return prev
+
 
 def average(values):
     """计算平均值,自动跳过空值"""
     vals = [v for v in values if v is not None]
     return round(sum(vals) / len(vals), 1) if vals else None
+
+
+
+def calc_bmi(weight, height):
+    """BMI = 体重(kg) / 身高(m)²;数据不全时返回 None"""
+    if not weight or not height:
+        return None
+    return round(weight / (height / 100) ** 2, 1)
+
+
+def bmi_level(bmi):
+    """按中国成人标准给出 BMI 等级"""
+    if bmi is None:
+        return None
+    if bmi < 18.5:
+        return "偏瘦"
+    if bmi < 24:
+        return "正常"
+    if bmi < 28:
+        return "超重"
+    return "肥胖"
 
 
 def check_alerts(record):
@@ -83,6 +144,7 @@ def check_alerts(record):
         elif record.blood_glucose < 3.9:
             alerts.append("血糖偏低")
     return alerts
+
 
 @records_bp.route("/records")
 @login_required         # ② 要求登录
@@ -114,7 +176,11 @@ def add_record():
         flash("记录添加成功!")
         return redirect(url_for("records.list_records"))
 
-    return render_template("records/add.html")
+    return render_template(
+        "records/add.html",
+        prev=last_values(current_user.id),
+        today=date.today().isoformat(),
+    )
 
 
 @records_bp.route("/records/<int:record_id>/edit", methods=["GET", "POST"])
@@ -136,6 +202,7 @@ def edit_record(record_id):
         record.blood_glucose = values["blood_glucose"]
         record.heart_rate = values["heart_rate"]
         record.weight = values["weight"]
+        record.height = values["height"]
         record.note = values["note"]
         db.session.commit()
         flash("记录已更新!")
@@ -171,9 +238,11 @@ def analysis():
     systolic = [r.systolic_bp for r in records]
     diastolic = [r.diastolic_bp for r in records]
     glucose = [r.blood_glucose for r in records]
+    bmi = [calc_bmi(r.weight, r.height) for r in records]      # ← 新增
 
     # 统计摘要
     systolic_valid = [v for v in systolic if v is not None]
+    bmi_valid = [v for v in bmi if v is not None]              # ← 新增
     stats = {
         "count": len(records),
         "avg_systolic": average(systolic),
@@ -181,6 +250,9 @@ def analysis():
         "avg_glucose": average(glucose),
         "max_systolic": max(systolic_valid) if systolic_valid else None,
         "min_systolic": min(systolic_valid) if systolic_valid else None,
+        "avg_bmi": average(bmi),                               # ← 新增
+        "last_bmi": bmi_valid[-1] if bmi_valid else None,      # ← 新增
+        "last_bmi_level": bmi_level(bmi_valid[-1]) if bmi_valid else None,   # ← 新增
     }
 
     # 异常预警:逐条检查
@@ -196,6 +268,8 @@ def analysis():
         systolic=systolic,
         diastolic=diastolic,
         glucose=glucose,
+        bmi=bmi,                                               # ← 新增
         stats=stats,
         alerts=alerts,
     )
+
